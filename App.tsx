@@ -1,32 +1,29 @@
-// In App.js in a new project
-
-import * as React from 'react';
-import { View, Text } from 'react-native';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'react-native';
 
-function HomeScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Home Screen</Text>
-    </View>
-  );
-}
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { MainNavigator } from './src/navigation/MainNavigator';
+import { AuthNavigator } from './src/navigation/AuthNavigator';
 
-const Stack = createNativeStackNavigator();
+const RootNavigator = () => {
+  const { isLoggedIn } = useAuth();
 
-function RootStack() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="Home" component={HomeScreen} />
-    </Stack.Navigator>
-  );
-}
-
-export default function App() {
   return (
     <NavigationContainer>
-      <RootStack />
+      {/* Status bar transparan agar menyatu dengan desain header */}
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      {isLoggedIn ? <MainNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
-}
+};
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
+  );
+};
+
+export default App;
