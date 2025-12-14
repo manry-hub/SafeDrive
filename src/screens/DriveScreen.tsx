@@ -6,14 +6,20 @@ import {
   SafeAreaView,
   TouchableOpacity,
   StatusBar,
-  Dimensions,
+  // Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
-// PERBAIKAN 1: Gunakan 'any' pada props agar tidak error merah TypeScript
-const { width } = Dimensions.get('window');
+import {
+  Camera,
+  useCameraDevice,
+  useCameraPermission,
+} from 'react-native-vision-camera';
+// const { width } = Dimensions.get('window');
 
 const DriveScreen = ({ navigation }: any) => {
+  const device = useCameraDevice('front');
+  const { hasPermission } = useCameraPermission();
+
   const [isRecording, setIsRecording] = useState(false);
   const [alertPercentage, setAlertPercentage] = useState(0);
   const [currentTime, setCurrentTime] = useState('');
@@ -62,20 +68,20 @@ const DriveScreen = ({ navigation }: any) => {
     percentage > 70 ? '#dc3545' : percentage > 40 ? '#ffc107' : '#28a745';
   const getAlertText = (percentage: number) =>
     percentage > 70 ? 'DANGER!' : percentage > 40 ? 'CAUTION!' : 'OK';
+  if (!hasPermission) return <Text>Loading camera...</Text>;
+  if (device == null) return <Text>Loading camera...</Text>;
+  if (!device) return <Text>Loading camera...</Text>;
 
   return (
     <View style={styles.container}>
-      {/* PERBAIKAN 2: Menghapus semua { ' ' } yang menyebabkan error */}
       <StatusBar hidden />
 
-      <View style={styles.cameraPlaceholder}>
-        <Text style={styles.placeholderText}>LIVE CAMERA FEED</Text>
-        {isRecording && (
-          <View style={styles.faceBoundingBox}>
-            <Text style={styles.faceBoxLabel}>DETECTING...</Text>
-          </View>
-        )}
-      </View>
+      <Camera
+        style={StyleSheet.absoluteFill}
+        device={device}
+        isActive={true}
+        video={true}
+      />
 
       <SafeAreaView style={styles.systemInfoOverlay}>
         <View style={styles.systemStatus}>
@@ -145,30 +151,10 @@ const DriveScreen = ({ navigation }: any) => {
   );
 };
 
-// PERBAIKAN 3: Ubah ke export default
 export default DriveScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  cameraPlaceholder: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#1a1a1a',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: { color: '#555', fontSize: 18, fontWeight: 'bold' },
-  faceBoundingBox: {
-    position: 'absolute',
-    width: width * 0.6,
-    height: width * 0.6,
-    borderWidth: 3,
-    borderColor: '#007AFF',
-    borderRadius: 10,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 5,
-  },
-  faceBoxLabel: { color: '#007AFF', fontSize: 12, fontWeight: 'bold' },
   systemInfoOverlay: {
     position: 'absolute',
     top: 0,

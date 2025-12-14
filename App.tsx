@@ -12,7 +12,11 @@ const RootNavigator = () => {
   return (
     <NavigationContainer>
       {/* Status bar transparan agar menyatu dengan desain header */}
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
       {isLoggedIn ? <MainNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
