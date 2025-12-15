@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   TouchableOpacity,
   StatusBar,
-  // Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {
@@ -14,7 +13,8 @@ import {
   useCameraDevice,
   useCameraPermission,
 } from 'react-native-vision-camera';
-// const { width } = Dimensions.get('window');
+
+type DriverState = 'MATA TERBUKA' | 'MATA TERTUTUP' | 'MULUT MENGUAP';
 
 const DriveScreen = ({ navigation }: any) => {
   const device = useCameraDevice('front');
@@ -22,26 +22,33 @@ const DriveScreen = ({ navigation }: any) => {
 
   const [isRecording, setIsRecording] = useState(false);
   const [alertPercentage, setAlertPercentage] = useState(0);
-  const [currentTime, setCurrentTime] = useState('');
-  const [speed, setSpeed] = useState(0);
+  const [driverState, setDriverState] = useState<DriverState>('MATA TERBUKA');
+  const [recordDuration, setRecordDuration] = useState(0);
 
+  /** ======================
+   * DURASI KAMERA
+   * ====================== */
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(
-        now.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        }),
-      );
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    let timer: any;
 
+    if (isRecording) {
+      timer = setInterval(() => {
+        setRecordDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      setRecordDuration(0);
+    }
+
+    return () => clearInterval(timer);
+  }, [isRecording]);
+
+  /** ======================
+   * SIMULASI STATUS DRIVER
+   * ====================== */
   useEffect(() => {
     let alertInterval: any;
-    let speedInterval: any;
+    let driverInterval: any;
+
     if (isRecording) {
       alertInterval = setInterval(() => {
         setAlertPercentage(prev =>
@@ -51,38 +58,67 @@ const DriveScreen = ({ navigation }: any) => {
           ),
         );
       }, 2000);
-      speedInterval = setInterval(() => {
-        setSpeed(Math.floor(Math.random() * 121));
+
+      driverInterval = setInterval(() => {
+        const states: DriverState[] = [
+          'MATA TERBUKA',
+          'MATA TERTUTUP',
+          'MULUT MENGUAP',
+        ];
+        setDriverState(states[Math.floor(Math.random() * states.length)]);
       }, 3000);
     } else {
       setAlertPercentage(0);
-      setSpeed(0);
+      setDriverState('MATA TERBUKA');
     }
+
     return () => {
       clearInterval(alertInterval);
-      clearInterval(speedInterval);
+      clearInterval(driverInterval);
     };
   }, [isRecording]);
 
+  /** ======================
+   * HELPER
+   * ====================== */
+  const formatDuration = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   const getAlertColor = (percentage: number) =>
     percentage > 70 ? '#dc3545' : percentage > 40 ? '#ffc107' : '#28a745';
+
   const getAlertText = (percentage: number) =>
-    percentage > 70 ? 'DANGER!' : percentage > 40 ? 'CAUTION!' : 'OK';
-  if (!hasPermission) return <Text>Loading camera...</Text>;
-  if (device == null) return <Text>Loading camera...</Text>;
-  if (!device) return <Text>Loading camera...</Text>;
+    percentage > 70 ? 'DANGER' : percentage > 40 ? 'CAUTION' : 'OK';
+
+  const getDriverColor = (state: DriverState) => {
+    switch (state) {
+      case 'MATA TERTUTUP':
+        return '#dc3545';
+      case 'MULUT MENGUAP':
+        return '#ffc107';
+      default:
+        return 'rgba(255,255,255,0.1)';
+    }
+  };
+
+  if (!hasPermission || !device) {
+    return (
+      <View style={styles.loading}>
+        <Text style={{ color: '#fff' }}>Loading camera...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <StatusBar hidden />
 
-      <Camera
-        style={StyleSheet.absoluteFill}
-        device={device}
-        isActive={true}
-        video={true}
-      />
+      <Camera style={StyleSheet.absoluteFill} device={device} isActive video />
 
+      {/* ===== TOP SYSTEM INFO ===== */}
       <SafeAreaView style={styles.systemInfoOverlay}>
         <View style={styles.systemStatus}>
           <View style={styles.statusDot} />
@@ -91,6 +127,7 @@ const DriveScreen = ({ navigation }: any) => {
         <Text style={styles.versionText}>v1.0.0</Text>
       </SafeAreaView>
 
+      {/* ===== BOTTOM CONTROLS ===== */}
       <SafeAreaView style={styles.bottomControlsOverlay}>
         <View style={styles.controlPanel}>
           <TouchableOpacity
@@ -99,6 +136,7 @@ const DriveScreen = ({ navigation }: any) => {
           >
             <Icon name="settings-outline" size={28} color="#999" />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={[
               styles.recordButton,
@@ -112,6 +150,7 @@ const DriveScreen = ({ navigation }: any) => {
               color="#fff"
             />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.controlButton}
             onPress={() => navigation.goBack()}
@@ -122,11 +161,19 @@ const DriveScreen = ({ navigation }: any) => {
 
         {isRecording && (
           <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Icon name="speedometer-outline" size={24} color="#fff" />
-              <Text style={styles.statValue}>{speed}</Text>
-              <Text style={styles.statUnit}>km/h</Text>
+            {/* DRIVER CONDITION */}
+            <View
+              style={[
+                styles.statCard,
+                { backgroundColor: getDriverColor(driverState) },
+              ]}
+            >
+              <Icon name="eye-outline" size={24} color="#fff" />
+              <Text style={styles.statValue}>{driverState}</Text>
+              <Text style={styles.statUnit}>KONDISI</Text>
             </View>
+
+            {/* ALERT */}
             <View
               style={[
                 styles.statCard,
@@ -139,10 +186,14 @@ const DriveScreen = ({ navigation }: any) => {
                 {getAlertText(alertPercentage)}
               </Text>
             </View>
+
+            {/* DURATION */}
             <View style={styles.statCard}>
               <Icon name="time-outline" size={24} color="#fff" />
-              <Text style={styles.statValue}>{currentTime}</Text>
-              <Text style={styles.statUnit}>TIME</Text>
+              <Text style={styles.statValue}>
+                {formatDuration(recordDuration)}
+              </Text>
+              <Text style={styles.statUnit}>DURASI</Text>
             </View>
           </View>
         )}
@@ -153,8 +204,17 @@ const DriveScreen = ({ navigation }: any) => {
 
 export default DriveScreen;
 
+/** ======================
+ * STYLES
+ * ====================== */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
+  loading: {
+    flex: 1,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   systemInfoOverlay: {
     position: 'absolute',
     top: 0,
@@ -171,7 +231,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: '#28a745',
-    marginRight: 5,
+    marginRight: 6,
   },
   statusText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
   versionText: { color: '#ccc', fontSize: 14 },
@@ -194,7 +254,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -210,19 +270,25 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '90%',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 15,
+    width: '92%',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 16,
     padding: 10,
   },
   statCard: {
     flex: 1,
     alignItems: 'center',
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     marginHorizontal: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  statValue: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginTop: 5 },
+  statValue: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 6,
+    textAlign: 'center',
+  },
   statUnit: { color: '#ccc', fontSize: 12 },
 });
