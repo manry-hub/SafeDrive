@@ -692,7 +692,7 @@ const DriveScreen = () => {
           device={device}
           isActive={isActive}
           frameProcessor={frameProcessor}
-          frameProcessorFps={5}
+          // frameProcessorFps={5}
         />
       )}
 
