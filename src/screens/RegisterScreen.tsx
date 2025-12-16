@@ -10,20 +10,69 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 const RegisterScreen = ({ navigation }: any) => {
+  const { register } = useAuth();
+
+  // STATE FORM
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState<'driver' | 'company'>('driver');
 
-  // STATE PENTING: Untuk melacak input mana yang sedang diklik (Fokus)
+  // Driver
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [licenseExpiry, setLicenseExpiry] = useState('');
+
+  // Company
+  const [companyName, setCompanyName] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+
+  // Emergency contacts
+  const [emergencyContacts, setEmergencyContacts] = useState<
+    { name: string; phone: string; relationship: string }[]
+  >([]);
+
   const [activeInput, setActiveInput] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+    if (!name || !email || !password || !phone) {
+      Alert.alert('Error', 'Semua field wajib diisi');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await register({
+        name,
+        email,
+        password,
+        password_confirmation: password,
+        role,
+        phone,
+        license_number: role === 'driver' ? licenseNumber : undefined,
+        license_expiry: role === 'driver' ? licenseExpiry : undefined,
+        company_name: role === 'company' ? companyName : undefined,
+        company_email: role === 'company' ? companyEmail : undefined,
+        emergency_contacts: emergencyContacts,
+      });
+      Alert.alert('Sukses', 'Registrasi berhasil!');
+      navigation.navigate('Login');
+    } catch (err: any) {
+      Alert.alert('Gagal', err.message || 'Registrasi gagal');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -36,29 +85,17 @@ const RegisterScreen = ({ navigation }: any) => {
         backgroundColor="transparent"
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* HEADER BLUE + WAVE */}
+      <ScrollView contentContainerStyle={styles.scroll}>
         <View style={[styles.header, { width: width * 1.2 }]}>
-          <Icon
-            name="car-sport"
-            size={80}
-            color="#fff"
-            style={styles.headerIcon}
-          />
+          <Icon name="car-sport" size={80} color="#fff" />
         </View>
 
-        {/* FORM */}
         <View style={styles.form}>
           <Text style={styles.title}>Buat akun</Text>
 
-          {/* Full Name */}
+          {/* Nama */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Nama Lengkap</Text>
-            {/* LOGIKA STYLE: Jika aktif, pakai style tambahan 'inputActive' */}
             <View
               style={[
                 styles.inputBox,
@@ -68,13 +105,10 @@ const RegisterScreen = ({ navigation }: any) => {
               <TextInput
                 value={name}
                 onChangeText={setName}
-                // Event saat diklik (Fokus)
                 onFocus={() => setActiveInput('name')}
-                // Event saat selesai/keluar (Blur)
                 onBlur={() => setActiveInput(null)}
                 placeholder="John Doe"
-                placeholderTextColor="#C6C6C6"
-                autoCapitalize="words"
+                placeholderTextColor="#999"
                 style={styles.input}
               />
             </View>
@@ -82,7 +116,7 @@ const RegisterScreen = ({ navigation }: any) => {
 
           {/* Email */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Alamat email</Text>
+            <Text style={styles.label}>Email</Text>
             <View
               style={[
                 styles.inputBox,
@@ -94,9 +128,8 @@ const RegisterScreen = ({ navigation }: any) => {
                 onChangeText={setEmail}
                 onFocus={() => setActiveInput('email')}
                 onBlur={() => setActiveInput(null)}
-                placeholder="JohnDoe@contoh.com"
-                placeholderTextColor="#C6C6C6"
-                keyboardType="email-address"
+                placeholder="email@mail.com"
+                placeholderTextColor="#999"
                 autoCapitalize="none"
                 style={styles.input}
               />
@@ -117,47 +150,166 @@ const RegisterScreen = ({ navigation }: any) => {
                 onChangeText={setPassword}
                 onFocus={() => setActiveInput('password')}
                 onBlur={() => setActiveInput(null)}
-                placeholder="johndoe1324"
-                placeholderTextColor="#C6C6C6"
+                placeholder="********"
+                placeholderTextColor="#999"
                 secureTextEntry={!showPassword}
                 style={styles.input}
               />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeToggle}
-              >
-                <Icon
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={20}
-                  color="#999"
-                />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Icon name={showPassword ? 'eye-off' : 'eye'} size={20} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Sign Up Button */}
+          {/* Phone */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nomor Telepon</Text>
+            <View
+              style={[
+                styles.inputBox,
+                activeInput === 'phone' && styles.inputActive,
+              ]}
+            >
+              <TextInput
+                value={phone}
+                onChangeText={setPhone}
+                onFocus={() => setActiveInput('phone')}
+                onBlur={() => setActiveInput(null)}
+                placeholder="081234567890"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+                style={styles.input}
+              />
+            </View>
+          </View>
+
+          {/* Role Selector */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Daftar sebagai</Text>
+            <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+              <TouchableOpacity
+                onPress={() => setRole('driver')}
+                style={{ marginRight: 20 }}
+              >
+                <Text style={{ color: role === 'driver' ? 'blue' : '#555' }}>
+                  Driver
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setRole('company')}>
+                <Text style={{ color: role === 'company' ? 'blue' : '#555' }}>
+                  Company
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Conditional Driver Fields */}
+          {role === 'driver' && (
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nomor SIM</Text>
+                <View
+                  style={[
+                    styles.inputBox,
+                    activeInput === 'licenseNumber' && styles.inputActive,
+                  ]}
+                >
+                  <TextInput
+                    value={licenseNumber}
+                    onChangeText={setLicenseNumber}
+                    onFocus={() => setActiveInput('licenseNumber')}
+                    onBlur={() => setActiveInput(null)}
+                    placeholder="SIM12345678"
+                    placeholderTextColor="#999"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Masa Berlaku SIM</Text>
+                <View
+                  style={[
+                    styles.inputBox,
+                    activeInput === 'licenseExpiry' && styles.inputActive,
+                  ]}
+                >
+                  <TextInput
+                    value={licenseExpiry}
+                    onChangeText={setLicenseExpiry}
+                    onFocus={() => setActiveInput('licenseExpiry')}
+                    onBlur={() => setActiveInput(null)}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#999"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* Conditional Company Fields */}
+          {role === 'company' && (
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nama Perusahaan</Text>
+                <View
+                  style={[
+                    styles.inputBox,
+                    activeInput === 'companyName' && styles.inputActive,
+                  ]}
+                >
+                  <TextInput
+                    value={companyName}
+                    onChangeText={setCompanyName}
+                    onFocus={() => setActiveInput('companyName')}
+                    onBlur={() => setActiveInput(null)}
+                    placeholder="PT Contoh"
+                    placeholderTextColor="#999"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Perusahaan</Text>
+                <View
+                  style={[
+                    styles.inputBox,
+                    activeInput === 'companyEmail' && styles.inputActive,
+                  ]}
+                >
+                  <TextInput
+                    value={companyEmail}
+                    onChangeText={setCompanyEmail}
+                    onFocus={() => setActiveInput('companyEmail')}
+                    onBlur={() => setActiveInput(null)}
+                    placeholder="company@mail.com"
+                    placeholderTextColor="#999"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+            </>
+          )}
+
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate('Login')}
-            activeOpacity={0.7} // Efek tombol ditekan (transparan)
+            onPress={handleRegister}
+            disabled={loading}
           >
-            <Text style={styles.buttonText}>Daftar Akun</Text>
-            <Icon
-              name="arrow-forward"
-              size={18}
-              color="#fff"
-              style={styles.buttonIcon}
-            />
+            <Text style={styles.buttonText}>
+              {loading ? 'Mendaftarkan...' : 'Daftar Akun'}
+            </Text>
+            <Icon name="arrow-forward" size={18} color="#fff" />
           </TouchableOpacity>
 
-          {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Apakah kamu sudah memiliki akun?{' '}
+            <Text>Sudah punya akun? </Text>
+            <Text
+              onPress={() => navigation.navigate('Login')}
+              style={styles.footerLink}
+            >
+              Masuk
             </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.footerLink}>Masuk</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -167,6 +319,10 @@ const RegisterScreen = ({ navigation }: any) => {
 
 export default RegisterScreen;
 
+// Styles tetap sama seperti sebelumnya
+
+/* styles sama seperti milikmu */
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -174,6 +330,14 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flexGrow: 1,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+  },
+  eyes: {
+    paddingRight: 20,
   },
 
   // HEADER
@@ -293,6 +457,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
   },
+
   buttonIcon: {
     marginLeft: 10,
   },
