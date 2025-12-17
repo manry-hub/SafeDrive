@@ -10,6 +10,7 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -18,13 +19,29 @@ import LoginIcon from '../assets/icons/moni_login_icon.svg';
 const { width } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }: any) => {
+  const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  // STATE PENTING: Untuk melacak input mana yang sedang diklik (Fokus)
   const [activeInput, setActiveInput] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Email dan password wajib diisi');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await login(email, password);
+    } catch (err: any) {
+      Alert.alert('Login gagal', 'Email atau password salah', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -41,26 +58,15 @@ const LoginScreen = ({ navigation }: any) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* HEADER BLUE + WAVE */}
         <View style={styles.header}>
-          {/* <View style={styles.wave} /> */}
-          {/* <Icon
-            name="car-sport"
-            size={65}
-            color="#fff"
-            style={styles.headerIcon}
-          /> */}
-          <LoginIcon width={120} height={120} fill={'#ffffff'} />
+          <LoginIcon width={120} height={120} fill="#fff" />
         </View>
 
-        {/* FORM */}
         <View style={styles.form}>
           <Text style={styles.title}>Masuk ke SafeDrive</Text>
 
-          {/* Email */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Alamat email</Text>
-
             <View
               style={[
                 styles.inputBoxRow,
@@ -81,10 +87,8 @@ const LoginScreen = ({ navigation }: any) => {
             </View>
           </View>
 
-          {/* Password */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Kata sandi</Text>
-
             <View
               style={[
                 styles.inputBoxRow,
@@ -96,16 +100,12 @@ const LoginScreen = ({ navigation }: any) => {
                 onChangeText={setPassword}
                 onFocus={() => setActiveInput('password')}
                 onBlur={() => setActiveInput(null)}
-                placeholder="johndoe1324"
+                placeholder="********"
                 placeholderTextColor="#C6C6C6"
                 secureTextEntry={!showPassword}
                 style={styles.input}
               />
-
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeToggle}
-              >
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Icon
                   name={showPassword ? 'eye-off' : 'eye'}
                   size={20}
@@ -115,9 +115,14 @@ const LoginScreen = ({ navigation }: any) => {
             </View>
           </View>
 
-          {/* Sign In Button */}
-          <TouchableOpacity style={styles.button} onPress={login}>
-            <Text style={styles.buttonText}>Masuk</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? 'Memproses...' : 'Masuk'}
+            </Text>
             <Icon
               name="arrow-forward"
               size={18}
@@ -126,11 +131,8 @@ const LoginScreen = ({ navigation }: any) => {
             />
           </TouchableOpacity>
 
-          {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Apakah anda belum memiliki akun?{' '}
-            </Text>
+            <Text style={styles.footerText}>Belum punya akun? </Text>
             <Text
               onPress={() => navigation.navigate('Register')}
               style={styles.footerLink}
@@ -138,10 +140,6 @@ const LoginScreen = ({ navigation }: any) => {
               Daftar
             </Text>
           </View>
-
-          <TouchableOpacity>
-            <Text style={styles.forgot}>Lupa kata sandi</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -149,6 +147,8 @@ const LoginScreen = ({ navigation }: any) => {
 };
 
 export default LoginScreen;
+
+/* styles tetap sama seperti milikmu */
 
 const styles = StyleSheet.create({
   container: {

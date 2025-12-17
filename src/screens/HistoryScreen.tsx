@@ -1,6 +1,18 @@
 import React from 'react';
-import { SafeAreaView, View, Text, StyleSheet, FlatList } from 'react-native';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { StackScreenProps } from '@react-navigation/stack';
+import type { TabParamList } from '../navigation/BottomTabNavigator';
+import type { MainStackParamList } from '../navigation/MainNavigator';
 
 const dummyHistory = [
   {
@@ -28,8 +40,11 @@ const dummyHistory = [
     type: 'normal',
   },
 ];
-
-export const HistoryScreen = () => {
+type HistoryScreenProps = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, 'Riwayat'>,
+  StackScreenProps<MainStackParamList>
+>;
+export const HistoryScreen = ({ navigation }: HistoryScreenProps) => {
   const renderItem = ({ item }: { item: any }) => {
     if (item.type === 'alert') {
       return (
@@ -40,7 +55,7 @@ export const HistoryScreen = () => {
           </View>
           <View style={styles.divider} />
           <View style={styles.alertRow}>
-            <Text style={styles.alertTitle}>Tidak Memakai Seatbelt</Text>
+            <Text style={styles.alertTitle}>Bahaya</Text>
             <Text style={styles.alertTime}>tapos, cawang, jakarta</Text>
           </View>
         </View>
@@ -70,16 +85,18 @@ export const HistoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Riwayat Mengemudi</Text>
-        <Icon name="trash-outline" size={24} color="#ff4444" />
-      </View>
-      <FlatList
-        data={dummyHistory}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
-      />
+      <TouchableOpacity onPress={() => navigation.navigate('Premium')}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Riwayat Mengemudi</Text>
+          <Icon name="trash-outline" size={24} color="#ff4444" />
+        </View>
+        <FlatList
+          data={dummyHistory}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+        />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
