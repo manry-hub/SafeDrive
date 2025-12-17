@@ -279,7 +279,9 @@ const DriveScreen = ({ navigation }: Props) => {
   if (!device || !hasPermission) {
     return (
       <SafeAreaView style={styles.center}>
-        <Text style={{ color: '#fff' }}>Camera not ready</Text>
+        <Text style={{ color: '#fff' }}>
+          Kamera belum Diizinkan. izinkan terlebih dahulu
+        </Text>
       </SafeAreaView>
     );
   }
