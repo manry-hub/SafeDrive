@@ -140,6 +140,10 @@ npx react-native start
 npx react-native run-android
 ```
 
+_dummy akun untuk login_
+email: healmanunsorry0000@gmail.com
+password: Sorry.0000
+
 4. Berikan izin kamera & notifikasi
 5. Arahkan kamera ke wajah pengemudi
 6. Sistem akan:
