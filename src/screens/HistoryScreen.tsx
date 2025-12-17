@@ -55,7 +55,7 @@ export const HistoryScreen = ({ navigation }: HistoryScreenProps) => {
           </View>
           <View style={styles.divider} />
           <View style={styles.alertRow}>
-            <Text style={styles.alertTitle}>Tidak Memakai Seatbelt</Text>
+            <Text style={styles.alertTitle}>Bahaya</Text>
             <Text style={styles.alertTime}>tapos, cawang, jakarta</Text>
           </View>
         </View>

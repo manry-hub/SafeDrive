@@ -734,6 +734,13 @@
 //     padding: 14,
 //   },
 // });
+
+// berhasil
+// import PipAndroid from 'react-native-pip-android';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { MainStackParamList } from '../navigation/MainNavigator';
+
+import { Platform } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   SafeAreaView,
@@ -759,13 +766,14 @@ import {
 
 import { Worklets } from 'react-native-worklets-core';
 
+type Props = NativeStackScreenProps<MainStackParamList, 'Drive'>;
 /* =====================
  * THRESHOLD KONFIGURASI
  * ===================== */
 const EYE_CLOSED_THRESHOLD = 0.25;
 const SMILE_THRESHOLD = 0.6;
 
-const DriveScreen = () => {
+const DriveScreen = ({ navigation }: Props) => {
   const device = useCameraDevice('front');
 
   const [hasPermission, setHasPermission] = useState(false);
@@ -943,6 +951,12 @@ const DriveScreen = () => {
     if (mouthStatus === 'Tidak Senyum') return '#4caf50';
     return '#9e9e9e';
   };
+  const enterPiPMode = () => {
+    if (Platform.OS === 'android') {
+      // PipAndroid.enterPipMode(300, 214);
+      // ratio 16:9
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -999,16 +1013,42 @@ const DriveScreen = () => {
 
       {/* ===== CONTROL ===== */}
       <View style={styles.overlay}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => setIsActive(!isActive)}
-        >
-          <Icon
-            name={isActive ? 'stop-circle' : 'play-circle'}
-            size={64}
-            color="#fff"
-          />
-        </TouchableOpacity>
+        <View style={styles.controlRow}>
+          {/* PiP BUTTON */}
+          <TouchableOpacity style={styles.smallButton} onPress={enterPiPMode}>
+            <Icon name="duplicate-outline" size={28} color="#fff" />
+          </TouchableOpacity>
+
+          {/* START / STOP */}
+          <TouchableOpacity
+            style={styles.mainButton}
+            onPress={() => setIsActive(!isActive)}
+          >
+            <Icon
+              name={isActive ? 'stop-circle' : 'play-circle'}
+              size={64}
+              color="#fff"
+            />
+          </TouchableOpacity>
+
+          {/* EXIT */}
+          <TouchableOpacity
+            style={styles.smallButton}
+            onPress={() => {
+              setIsActive(false);
+
+              // kasih waktu kamera & frameProcessor stop
+              setTimeout(() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabs' }],
+                });
+              }, 100);
+            }}
+          >
+            <Icon name="exit-outline" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -1102,5 +1142,26 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginLeft: 8,
     fontSize: 14,
+  },
+  controlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+  },
+
+  smallButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  mainButton: {
+    backgroundColor: '#1e88e5',
+    borderRadius: 60,
+    padding: 14,
+    elevation: 6,
   },
 });
