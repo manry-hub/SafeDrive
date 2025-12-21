@@ -31,6 +31,7 @@ import { Worklets } from 'react-native-worklets-core';
 
 import { playBeep } from '../services/alertSound';
 import { showAlertNotification } from '../services/alertNotification';
+import { saveAlertHistory } from '../services//HistoryStorage';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'Drive'>;
 
@@ -155,6 +156,15 @@ const DriveScreen = ({ navigation }: Props) => {
           'Tekan notifikasi ini untuk memastikan anda baik baik saja',
           true,
         );
+
+        saveAlertHistory({
+          id: Date.now().toString(),
+          duration,
+          condition: 'DANGER',
+          message: 'Wajah tidak terdeteksi',
+          timestamp: now,
+        });
+
         alertLevelRef.current = 'DANGER';
       }
 
@@ -220,6 +230,15 @@ const DriveScreen = ({ navigation }: Props) => {
           'Perhatian',
           'Anda mulai mengantuk. Perhatikan jalan!',
         );
+
+        saveAlertHistory({
+          id: Date.now().toString(),
+          duration,
+          condition: 'WARNING_1',
+          message: 'Mulai mengantuk',
+          timestamp: now,
+        });
+
         alertLevelRef.current = 'WARNING_1';
       }
 
@@ -230,6 +249,15 @@ const DriveScreen = ({ navigation }: Props) => {
           'Peringatan',
           'Anda Mengantuk, Silahkan Istirahat terlebih dahulu',
         );
+
+        saveAlertHistory({
+          id: Date.now().toString(),
+          duration,
+          condition: 'WARNING_2',
+          message: 'Mengantuk berat',
+          timestamp: now,
+        });
+
         alertLevelRef.current = 'WARNING_2';
       }
     }

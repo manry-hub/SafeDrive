@@ -13,75 +13,48 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { StackScreenProps } from '@react-navigation/stack';
 import type { TabParamList } from '../navigation/BottomTabNavigator';
 import type { MainStackParamList } from '../navigation/MainNavigator';
+import { useFocusEffect } from '@react-navigation/native';
+import { getAlertHistory } from '../services/HistoryStorage';
+import { AlertHistory } from '../services/AlertHistory';
 
-const dummyHistory = [
-  {
-    id: '1',
-    time: '00:15',
-    route: 'curug, cimanggis, depok',
-    date: '19.33 31 Nov 2025',
-    dateEnd: '05.23 30 Nov 2025',
-    type: 'normal',
-  },
-  {
-    id: '2',
-    time: '00:15',
-    route: 'Mengantuk',
-    desc: '19.33 31 Nov 2025',
-    dateEnd: 'Tidak Memakai Seatbelt',
-    type: 'alert',
-  },
-  {
-    id: '3',
-    time: '00:15',
-    route: 'curug, cimanggis, depok',
-    date: '19.33 31 Nov 2025',
-    dateEnd: '05.23 30 Nov 2025',
-    type: 'normal',
-  },
-];
 type HistoryScreenProps = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, 'Riwayat'>,
   StackScreenProps<MainStackParamList>
 >;
-export const HistoryScreen = ({ navigation }: HistoryScreenProps) => {
-  const renderItem = ({ item }: { item: any }) => {
-    if (item.type === 'alert') {
-      return (
-        <View style={styles.alertCard}>
-          <View style={styles.alertRow}>
-            <Text style={styles.alertTitle}>Mengantuk</Text>
-            <Text style={styles.alertTime}>19.33 31 Nov 2025</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.alertRow}>
-            <Text style={styles.alertTitle}>Bahaya</Text>
-            <Text style={styles.alertTime}>tapos, cawang, jakarta</Text>
-          </View>
-        </View>
-      );
-    }
 
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Icon name="refresh-outline" size={20} color="#000" />
-          <Text style={styles.duration}>{item.time}</Text>
-        </View>
-        <Text style={styles.route}>{item.route}</Text>
-        <View style={styles.dateRow}>
-          <Text style={styles.date}>{item.date}</Text>
-          <Icon
-            name="arrow-forward"
-            size={12}
-            color="#000"
-            style={{ marginHorizontal: 5 }}
-          />
-          <Text style={styles.date}>{item.dateEnd}</Text>
-        </View>
+export const HistoryScreen = ({ navigation }: HistoryScreenProps) => {
+  const [history, setHistory] = React.useState<AlertHistory[]>([]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      getAlertHistory().then(setHistory);
+    }, []),
+  );
+  const formatDate = (ts: number) => new Date(ts).toLocaleDateString('id-ID');
+
+  const formatTime = (ts: number) =>
+    new Date(ts).toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const renderItem = ({ item }: { item: AlertHistory }) => (
+    <View style={styles.alertCard}>
+      <View style={styles.alertRow}>
+        <Text style={styles.alertTitle}>{item.message}</Text>
+        <Text style={styles.alertTime}>{formatTime(item.timestamp)}</Text>
       </View>
-    );
-  };
+
+      <View style={styles.divider} />
+
+      <View style={styles.alertRow}>
+        <Text style={styles.alertTitle}>
+          Durasi: {Math.floor(item.duration / 60)}:{item.duration % 60}
+        </Text>
+        <Text style={styles.alertTime}>{formatDate(item.timestamp)}</Text>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -91,10 +64,9 @@ export const HistoryScreen = ({ navigation }: HistoryScreenProps) => {
           <Icon name="trash-outline" size={24} color="#ff4444" />
         </View>
         <FlatList
-          data={dummyHistory}
-          renderItem={renderItem}
+          data={history}
           keyExtractor={item => item.id}
-          contentContainerStyle={styles.list}
+          renderItem={renderItem}
         />
       </TouchableOpacity>
     </SafeAreaView>
